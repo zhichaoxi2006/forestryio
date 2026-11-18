@@ -1,0 +1,17 @@
+{
+  "itemGroup.forestryio": "Forestry IO",
+  "item.forestryio.forestry_filter": "Forestry Filter",
+  "container.forestryio.forestry_filter": "Forestry Filter",
+  "tooltip.forestryio.forestry_filter.allowlist": "Filter mode: allow list",
+  "tooltip.forestryio.forestry_filter.denylist": "Filter mode: deny list",
+  "tooltip.forestryio.forestry_filter.rules": "Conditions: %s",
+  "tooltip.forestryio.forestry_filter.more": "... and %s more",
+  "tooltip.forestryio.forestry_filter.hint": "Use it as the filter of a LaserIO item card, or right-click to edit it.",
+  "gui.forestryio.forestry_filter.search": "Search chromosomes",
+  "gui.forestryio.forestry_filter.no_sample": "Insert a genetic Forestry item (bee, sapling, pollen...) to list its chromosomes",
+  "gui.forestryio.forestry_filter.no_matches": "No chromosome matches the search",
+  "gui.forestryio.forestry_filter.add_all": "Add every attribute of the sample",
+  "gui.forestryio.forestry_filter.remove_selected": "Remove the selected condition",
+  "gui.forestryio.forestry_filter.clear_all": "Clear all conditions",
+  "gui.forestryio.forestry_filter.row_hint": "Left click: toggle - Right click: remove"
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "laserio",
+  "ingredients": [
+    {
+      "item": "laserio:filter_nbt"
+    },
+    {
+      "item": "forestry:honey_comb"
+    },
+    {
+      "item": "forestry:propolis"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "forestryio:forestry_filter"
+  }
+}

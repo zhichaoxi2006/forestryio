@@ -1,0 +1,52 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "${mod_license}"
+issueTrackerURL = "https://github.com/zhichaoxi2006/ForestryIO/issues"
+
+[[mods]]
+modId = "${mod_id}"
+version = "${mod_version}"
+displayName = "${mod_name}"
+authors = "${mod_authors}"
+logoFile = "logo.png"
+description = '''${mod_description}'''
+
+# Teaches LaserIO's filter lookup about the Forestry Filter (see the mixin classes for details).
+[[mixins]]
+config = "forestryio.mixins.json"
+
+[[dependencies."${mod_id}"]]
+modId = "neoforge"
+type = "required"
+versionRange = "${neo_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "laserio"
+type = "required"
+versionRange = "${laserio_version_range}"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "forestry"
+type = "required"
+versionRange = "${forestry_version_range}"
+ordering = "AFTER"
+side = "BOTH"
+
+# Required transitively by Forestry, but listed explicitly so the development run is self-describing.
+[[dependencies."${mod_id}"]]
+modId = "patchouli"
+type = "required"
+versionRange = "${patchouli_version_range}"
+ordering = "NONE"
+side = "BOTH"

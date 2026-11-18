@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Development runs / server output
+run/
+runs/
+logs/
+crash-reports/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs, JVM crash dumps, editor/backup leftovers
+*.log
+hs_err_pid*
+replay_pid*
+*.tmp
+*.bak
+*~
+
+# Data generator cache
+src/generated/resources/.cache/
+
+# Local-only design material: textures/models extracted from the dependency jars plus
+# decompiled class dumps under design/refs/. design/render_items.py reads them, but they
+# are third-party content and can be re-extracted from libs/*.jar at any time.
+design/refs/
+
+# Dependency jars in libs/ are intentionally NOT ignored: the build runs offline and needs them.

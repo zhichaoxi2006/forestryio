@@ -1,0 +1,24 @@
+// `pluginManagement` has to be the first statement of the settings script.
+pluginManagement {
+    repositories {
+        mavenLocal()
+        gradlePluginPortal()
+        maven { url = 'https://maven.neoforged.net/releases' }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Offline by default.
+//
+// This machine has no usable route to maven.neoforged.net (timeouts), so every Gradle invocation -
+// including the IDE import - runs with Gradle's offline flag set. ModDevGradle, NeoForge/NeoForm,
+// Parchment and Minecraft are all resolved from the local Gradle cache in $GRADLE_USER_HOME.
+//
+// Pass `-Ponline=true` when you actually want to reach the network, e.g. to bump neo_version in
+// gradle.properties and download the new artifacts.
+// ---------------------------------------------------------------------------------------------
+if (!gradle.startParameter.projectProperties.containsKey('online')) {
+    gradle.startParameter.offline = true
+}
+
+rootProject.name = 'forestryio'

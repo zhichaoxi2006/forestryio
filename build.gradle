@@ -1,0 +1,178 @@
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = project.mod_version
+group = project.mod_group_id
+
+base {
+    archivesName = "${project.mod_id}-${project.minecraft_version}"
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(project.java_version as int)
+    }
+    withSourcesJar()
+}
+
+// =============================================================================================
+// Minecraft 1.21.1 / NeoForge 21.1.x via ModDevGradle
+// =============================================================================================
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+        data {
+            data()
+            programArguments.addAll(
+                    '--mod', project.mod_id,
+                    '--all',
+                    '--output', file('src/generated/resources/').absolutePath,
+                    '--existing', file('src/main/resources/').absolutePath
+            )
+        }
+    }
+
+    mods {
+        // Must match mod_id: this binds the source set to the mod for the development runs.
+        create(project.mod_id) {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+// The build is offline (see settings.gradle). These repositories are only a fallback for the case
+// where an artifact is not in the local Gradle cache yet and the build is run with -Ponline=true.
+repositories {
+    mavenLocal()
+    maven {
+        name = 'NeoForged'
+        url = 'https://maven.neoforged.net/releases'
+    }
+    mavenCentral()
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+    }
+}
+
+// =============================================================================================
+// Dependencies
+//
+// The mod jars live in libs/ so that the build resolves them without any repository. compileOnly
+// keeps them out of the built jar, runtimeOnly puts them on the development classpath so that
+// `runClient` / `runServer` start with LaserIO, Forestry: CE and Patchouli loaded.
+// =============================================================================================
+def laserioJar = "laserio-${project.laserio_version}.jar"
+def forestryJar = "forestry-${project.minecraft_version}-${project.forestry_version}.jar"
+def patchouliJar = "Patchouli-${project.patchouli_version}.jar"
+
+dependencies {
+    // == Required: LaserIO ====================================================================
+    compileOnly files("libs/${laserioJar}")
+    runtimeOnly files("libs/${laserioJar}")
+
+    // == Required: Forestry: Community Edition ===============================================
+    compileOnly files("libs/${forestryJar}")
+    runtimeOnly files("libs/${forestryJar}")
+    // Patchouli is required by Forestry: CE at runtime, so the development run needs it too.
+    runtimeOnly files("libs/${patchouliJar}")
+}
+
+// Fail early, with a readable message, if one of those offline jars is missing.
+def offlineJars = [
+        'LaserIO'          : "libs/${laserioJar}",
+        'Forestry: CE'     : "libs/${forestryJar}",
+        'Patchouli'        : "libs/${patchouliJar}",
+]
+
+tasks.register('verifyOfflineDependencies') {
+    group = 'verification'
+    description = 'Checks that the dependency jars in libs/ are present (the build runs offline).'
+
+    def jars = offlineJars
+
+    doLast {
+        def missing = jars.findAll { label, path -> !project.file(path).isFile() }
+        if (!missing.isEmpty()) {
+            throw new GradleException("""\
+                    Missing dependency jar(s) in libs/ - this build is offline, so they cannot be
+                    downloaded automatically:
+                    ${missing.collect { label, path -> "  - ${label}: ${path}" }.join('\n')}
+                    See libs/README.md for where these files come from.""" .stripIndent())
+        }
+        logger.lifecycle('Offline dependency jars:')
+        jars.each { label, path -> logger.lifecycle("  - ${label}: ${path}") }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn 'verifyOfflineDependencies'
+}
+
+// =============================================================================================
+// Metadata / packaging
+// =============================================================================================
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : project.minecraft_version,
+            minecraft_version_range: project.minecraft_version_range,
+            neo_version            : project.neo_version,
+            neo_version_range      : project.neo_version_range,
+            loader_version_range   : project.loader_version_range,
+            laserio_version        : project.laserio_version,
+            laserio_version_range  : project.laserio_version_range,
+            forestry_version       : project.forestry_version,
+            forestry_version_range : project.forestry_version_range,
+            patchouli_version      : project.patchouli_version,
+            patchouli_version_range: project.patchouli_version_range,
+            mod_id                 : project.mod_id,
+            mod_name               : project.mod_name,
+            mod_license            : project.mod_license,
+            mod_version            : project.mod_version,
+            mod_authors            : project.mod_authors,
+            mod_description        : project.mod_description,
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
+        expand replaceProperties
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : project.mod_id,
+                'Specification-Vendor'    : project.mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.jar.archiveVersion,
+                'Implementation-Vendor'   : project.mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+// Datagen output lives in the source tree so it can be committed.
+sourceSets.main.resources.srcDir 'src/generated/resources'
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = project.java_version as int
+}

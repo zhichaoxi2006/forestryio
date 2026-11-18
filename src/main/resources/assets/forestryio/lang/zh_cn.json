@@ -1,0 +1,17 @@
+{
+  "itemGroup.forestryio": "林业激光",
+  "item.forestryio.forestry_filter": "林业过滤器",
+  "container.forestryio.forestry_filter": "林业过滤器",
+  "tooltip.forestryio.forestry_filter.allowlist": "过滤模式：白名单",
+  "tooltip.forestryio.forestry_filter.denylist": "过滤模式：黑名单",
+  "tooltip.forestryio.forestry_filter.rules": "过滤条件：%s 条",
+  "tooltip.forestryio.forestry_filter.more": "……还有 %s 条",
+  "tooltip.forestryio.forestry_filter.hint": "放入 LaserIO 物品卡的过滤器槽，或右键打开设置。",
+  "gui.forestryio.forestry_filter.search": "搜索染色体",
+  "gui.forestryio.forestry_filter.no_sample": "放入林业的遗传物品（蜜蜂、树苗、花粉等）以列出它的染色体",
+  "gui.forestryio.forestry_filter.no_matches": "没有匹配搜索的染色体",
+  "gui.forestryio.forestry_filter.add_all": "加入样品全部属性",
+  "gui.forestryio.forestry_filter.remove_selected": "移除选中的条件",
+  "gui.forestryio.forestry_filter.clear_all": "清空全部条件",
+  "gui.forestryio.forestry_filter.row_hint": "左键：添加/移除　右键：删除"
+}
