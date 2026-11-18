@@ -156,6 +156,10 @@ tasks.withType(ProcessResources).configureEach {
 }
 
 tasks.named('jar', Jar).configure {
+    // Ship the license text inside the jar, so a downloaded build is self-describing (LGPL-3.0 requires
+    // the license to accompany the work).
+    from('LICENSE')
+
     manifest {
         attributes([
                 'Specification-Title'     : project.mod_id,

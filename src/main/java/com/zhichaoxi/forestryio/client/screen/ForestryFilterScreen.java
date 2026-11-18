@@ -11,6 +11,7 @@ import com.zhichaoxi.forestryio.item.ForestryFilterItem;
 import com.zhichaoxi.forestryio.menu.ForestryFilterMenu;
 import com.zhichaoxi.forestryio.network.UpdateForestryFilterPayload;
 import forestry.api.core.genetics.IGenome;
+import forestry.api.core.genetics.ISpeciesType;
 import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -38,6 +39,12 @@ import java.util.Locale;
  * sample's species type (bee, tree, butterfly, ...): one row for the active allele and one for the inactive allele.
  * Clicking a row adds or removes that condition; every condition for a stack's species type has to match for the
  * stack to pass (AND), and the allow/deny toggle inverts the result.
+ *
+ * <p>Conditions that are already part of the filter are always part of the list, even when the current sample cannot
+ * offer them: with no sample, with a sample of another species type, or when the sample carries a different allele
+ * value on that chromosome. They are inserted next to the rows of the same chromosome (or after the sample's rows
+ * when their species type is not the sample's) and get the species type in front, so a configured condition can
+ * never become invisible and impossible to remove.
  */
 public class ForestryFilterScreen extends AbstractContainerScreen<ForestryFilterMenu> {
     private static final ResourceLocation TEXTURE =
@@ -80,6 +87,8 @@ public class ForestryFilterScreen extends AbstractContainerScreen<ForestryFilter
     private int hoveredRow = -1;
     private int selectedRow = -1;
     private List<ForestryFilterRule> visibleRules = List.of();
+    /** Species type of the current sample, used to decide which rows need the species type in front. */
+    private ISpeciesType<?, ?> sampleSpeciesType;
 
     public ForestryFilterScreen(ForestryFilterMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -133,11 +142,25 @@ public class ForestryFilterScreen extends AbstractContainerScreen<ForestryFilter
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
-    /** Recomputes the rows shown on the current page from the sample in the ghost slot. */
+    /** Recomputes the rows shown on the current page from the sample in the ghost slot and the selected rules. */
     private void rebuildVisibleRules() {
         ItemStack sample = this.filterMenu.handler.getStackInSlot(ForestryFilterMenu.SAMPLE_SLOT);
         IGenome genome = ForestryGenetics.genome(sample);
-        List<ForestryFilterRule> allRules = genome == null ? List.of() : ForestryGenetics.rulesFor(genome);
+        this.sampleSpeciesType = ForestryGenetics.speciesType(sample);
+
+        List<ForestryFilterRule> allRules = new ArrayList<>();
+        if (genome != null) {
+            allRules.addAll(ForestryGenetics.rulesFor(genome));
+        }
+
+        // Selected conditions stay visible even when the sample cannot offer them, otherwise they would keep
+        // filtering without any way to see or remove them.
+        for (ForestryFilterRule rule : this.selectedRules) {
+            if (!allRules.contains(rule)) {
+                addSelectedRule(allRules, rule);
+            }
+        }
+
         String query = this.searchField == null ? "" : this.searchField.getValue().trim().toLowerCase(Locale.ROOT);
 
         if (!query.isEmpty()) {
@@ -151,6 +174,28 @@ public class ForestryFilterScreen extends AbstractContainerScreen<ForestryFilter
         this.visibleRules = allRules.subList(from, to);
     }
 
+    /**
+     * Adds a selected rule that the sample does not provide. Rules for a chromosome that is already listed are
+     * inserted after that chromosome's rows so they stay on the same page as the rest of the chromosome; rules for
+     * a species type the sample does not belong to are appended at the end.
+     */
+    private static void addSelectedRule(List<ForestryFilterRule> rules, ForestryFilterRule rule) {
+        int insertAt = -1;
+        for (int index = 0; index < rules.size(); index++) {
+            ForestryFilterRule listed = rules.get(index);
+            if (listed.speciesType().id().equals(rule.speciesType().id())
+                    && listed.chromosome().id().equals(rule.chromosome().id())) {
+                insertAt = index + 1;
+            }
+        }
+
+        if (insertAt >= 0) {
+            rules.add(insertAt, rule);
+        } else {
+            rules.add(rule);
+        }
+    }
+
     private void renderRuleList(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         int listLeft = this.getGuiLeft() + LIST_X;
         int listTop = this.getGuiTop() + LIST_Y;
@@ -160,7 +205,8 @@ public class ForestryFilterScreen extends AbstractContainerScreen<ForestryFilter
         this.hoveredRow = -1;
         if (this.visibleRules.isEmpty()) {
             ItemStack sample = this.filterMenu.handler.getStackInSlot(ForestryFilterMenu.SAMPLE_SLOT);
-            Component empty = Component.translatable(ForestryGenetics.isIndividual(sample)
+            boolean searching = this.searchField != null && !this.searchField.getValue().trim().isEmpty();
+            Component empty = Component.translatable(searching || ForestryGenetics.isIndividual(sample)
                     ? "gui.forestryio.forestry_filter.no_matches"
                     : "gui.forestryio.forestry_filter.no_sample");
             this.renderEmptyHint(guiGraphics, empty, listLeft, listTop);
@@ -231,14 +277,26 @@ public class ForestryFilterScreen extends AbstractContainerScreen<ForestryFilter
     }
 
     private String rowText(ForestryFilterRule rule) {
-        return rule.sideMarker() + " " + rule.chromosomeName().getString() + ": " + rule.alleleName().getString();
+        String text = rule.sideMarker() + " " + rule.chromosomeName().getString() + ": " + rule.alleleName().getString();
+        return this.showSpeciesType(rule) ? rule.speciesTypeName().getString() + " " + text : text;
     }
 
     private Component rowComponent(ForestryFilterRule rule) {
-        return Component.literal(rule.sideMarker() + " ")
+        Component text = Component.literal(rule.sideMarker() + " ")
                 .append(rule.chromosomeName())
                 .append(": ")
                 .append(rule.alleleName());
+        if (!this.showSpeciesType(rule)) {
+            return text;
+        }
+
+        return rule.speciesTypeName().copy().append(" ").append(text);
+    }
+
+    /** Rows of another species type (or every row when there is no sample) are prefixed with the species type. */
+    private boolean showSpeciesType(ForestryFilterRule rule) {
+        return this.sampleSpeciesType == null
+                || !this.sampleSpeciesType.getKaryotype().id().equals(rule.speciesType().getKaryotype().id());
     }
 
     private void addAllSampleRules() {

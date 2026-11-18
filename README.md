@@ -6,6 +6,7 @@ Minecraft **1.21.1** / **NeoForge** 模组开发环境，用于开发 **LaserIO 
 - Java 包名：`com.zhichaoxi.forestryio`
 - 构建系统：Gradle 8.9 + [ModDevGradle](https://github.com/neoforged/ModDevGradle) 2.0.148
 - 目标环境：Minecraft 1.21.1 / NeoForge 21.1.240 / Java 21
+- 当前版本：`0.1.1`（变更记录见 [`CHANGELOG.md`](CHANGELOG.md)）
 
 ## 依赖
 
@@ -24,6 +25,22 @@ runtimeOnly files("libs/laserio-1.9.11.jar")
 
 因此它们不会被 shade 进最终 jar，发布时由玩家/整合包自行安装。各 jar 的来源与升级方法见 [`libs/README.md`](libs/README.md)。
 
+## 许可证
+
+本项目以 **GNU Lesser General Public License v3.0 only**（SPDX：`LGPL-3.0-only`）发布，跟随上游依赖的许可证：
+
+- [Forestry: Community Edition](https://github.com/thedarkcolour/ForestryCE) 使用 `LGPL-3.0-only`；本模组直接编译并链接其 `forestry.api` 遗传学接口，作为其附属扩展沿用同一许可证最稳妥；
+- [LaserIO](https://github.com/Direwolf20-MC/LaserIO) 使用 MIT；MIT 与 LGPL-3.0 兼容，本项目可以吸收其代码/接口而不违反任何一方条款；
+- [Patchouli](https://github.com/VazkiiMods/Patchouli) 使用 CC BY-NC-SA 3.0，仅作为 Forestry 的运行时前置被间接加载；本模组既不打包也不修改其资源。
+
+许可证全文见 [`LICENSE`](LICENSE)（LGPL-3.0 在 GPL-3.0 基础上附加条款，GPL-3.0 全文见 <https://www.gnu.org/licenses/gpl-3.0.txt>）。`gradle.properties` 的 `mod_license` 会经 `processResources` 写入 `META-INF/neoforge.mods.toml` 的 `license` 字段，因此发布 jar 在模组列表里显示的就是该许可证；`LICENSE` 也会被打进 jar 根目录。
+
+合规要点：
+
+- `libs/` 里的三个 jar 只用于编译与开发运行（`compileOnly` + `runtimeOnly`），不会被 shade、也不会随发布 jar 分发，因此不涉及重新分发上游代码；
+- LGPL 要求用户能替换/重新链接所链接的库；本项目以源码公开、且不内嵌 Forestry，玩家可自行更换 Forestry 版本，满足该要求；
+- 分发修改版时需保留版权与许可证声明，并按 LGPL-3.0 提供对应源码。
+
 ## 快速开始
 
 ```powershell
@@ -40,7 +57,7 @@ runtimeOnly files("libs/laserio-1.9.11.jar")
 .\gradlew.bat runData --offline
 ```
 
-构建产物：`build/libs/forestryio-1.21.1-0.1.0.jar`。
+构建产物：`build/libs/forestryio-1.21.1-0.1.1.jar`。
 
 用 IntelliJ IDEA 直接打开项目根目录即可；Gradle JVM 选择 JDK 21。`settings.gradle` 默认给 Gradle 加上离线标志，因此 IDE 导入不会卡在仓库连接上。
 
@@ -67,6 +84,9 @@ runtimeOnly files("libs/laserio-1.9.11.jar")
 - 列表列出样品所属物种类型的每一条染色体，`0` 表示显性等位基因、`1` 表示隐性等位基因，例如
   `0 品种: 森林蜂`、`1 品种: 森林蜂`、`0 工作速度: 慢`；放入树苗时则显示 `0 品种: 橡树`、`0 高度: ...`
   等树木染色体。
+- 已加入的条件**始终**显示在列表里（蓝色）：即使没有放入样品、样品换成了别的物种，或样品在该染色体上的
+  等位基因与已选条件不同，条件也会保留。它排在同一条染色体的行旁边；不属于当前样品物种类型的条件排在
+  列表末尾并带物种名前缀，因此不会出现条件仍在生效、界面上却看不到也删不掉的情况。
 - **左键**一行：加入 / 移除该条件（已加入的条件显示为蓝色）；**右键**一行：直接移除。
 - 顶部搜索框按名称过滤列表；分页按钮或鼠标滚轮翻页。
 - 左上角按钮切换**白名单 / 黑名单**；`+` 把样品的全部属性一次性加入；垃圾桶清空全部条件。
@@ -109,12 +129,14 @@ runtimeOnly files("libs/laserio-1.9.11.jar")
 
 ```
 ForestryIO/
+├── LICENSE                      # LGPL-3.0-only 许可证全文（同时打进发布 jar）
+├── CHANGELOG.md                 # 版本变更记录（Keep a Changelog 格式）
 ├── build.gradle                 # ModDevGradle + 依赖 + 资源变量替换
 ├── gradle.properties            # 版本号、Mod 元数据
 ├── settings.gradle              # 默认离线、插件仓库
 ├── gradle/wrapper/              # Gradle 8.9 wrapper
 ├── libs/                        # 本地依赖 jar（LaserIO / Forestry / Patchouli）
-├── docs/                        # 文档图片
+├── docs/                        # 截图与商店页文案（CURSEFORGE.md）
 ├── design/                      # logo 源文件与设计脚本（refs/ 为本地参考素材，已 gitignore）
 ├── src/main/java/com/zhichaoxi/forestryio/
 │   ├── ForestryIO.java          # @Mod 入口（注册内容 + 网络 + 客户端初始化）
@@ -161,7 +183,8 @@ Forestry、Patchouli、NeoForge、Minecraft 也同样声明为 required，因此
 ## 发布前注意
 
 - 不要把 `libs/` 里的第三方 jar 打包进你自己的发布 jar，也不要在未遵守许可证的情况下重新分发它们。
-- `mod_license` 目前是 `All Rights Reserved`，发布前可在 `gradle.properties` 中改成你想要的许可证。
+- `mod_license` 目前是 `LGPL-3.0-only`（与 Forestry: CE 一致，见[许可证](#许可证)）。若要更换许可证，必须同时更新
+  `LICENSE` 与 `gradle.properties`；已经按 LGPL 发布的版本无法收回，且新许可证不能与 LGPL-3.0 冲突。
 - 版本号在 `gradle.properties` 的 `mod_version` 中修改。
 - 林业过滤器依赖两个 Mixin 钩子（`BaseCardCacheMixin`、`PacketOpenFilterMixin`），它们在 `neoforge.mods.toml` 的
   `[[mixins]]` 中注册。升级 LaserIO 前请确认 `BaseCardCache#isStackValidForCard(ItemStack)` 与
@@ -170,7 +193,8 @@ Forestry、Patchouli、NeoForge、Minecraft 也同样声明为 required，因此
 
 ## 已验证
 
-- `gradlew build --offline`：成功（本次改动后重新构建）；
+- `gradlew build --offline`：成功，`build/libs/forestryio-1.21.1-0.1.1.jar` 的 `META-INF/neoforge.mods.toml`
+  中 `version = "0.1.1"`、`license = "LGPL-3.0-only"`，jar 根目录包含 `LICENSE`（7427 字节）；
 - `gradlew runData --offline`：成功，Mod 列表包含 Forestry、Forestry IO、LaserIO、Patchouli；
 - `gradlew runServer --offline`：专用服务端启动到 `Done`，日志输出
   `Forestry IO loaded: LaserIO=true, Forestry=true, Patchouli=true` 与
@@ -182,3 +206,5 @@ Forestry、Patchouli、NeoForge、Minecraft 也同样声明为 required，因此
   - 混合过滤器同时接受蜜蜂与树苗；黑名单拒绝匹配的蜜蜂、放行没有基因组的泥土；
   - 全部条件的序列化 / 反序列化往返成功，旧版「仅蜜蜂」格式也能正确解析；
 - `gradlew runClient --offline`：客户端进入单人世界，林业过滤器界面成功渲染（见上方截图）。
+
+> 上面三条运行时验证来自 0.1.0 开发期的完整运行；0.1.1 只改动许可证、文档与过滤器列表显示逻辑，构建产物已重新验证。
